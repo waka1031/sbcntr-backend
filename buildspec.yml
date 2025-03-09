@@ -9,7 +9,7 @@ env:
 phases:
     install:
         runtime-versions:  
-            docker: 23
+            docker: 19
 
     pre_build:
         commands:
@@ -18,11 +18,14 @@ phases:
             - REPOSITORY_URI=${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION_NAME}.amazonaws.com/${ECR_REPOSITORY_NAME}
             # タグ名にGitのコミットハッシュを利用
             - IMAGE_TAG=$(echo ${CODEBUILD_RESOLVED_SOURCE_VERSION} | cut -c 1-7)
-
     build:
         commands:
             - docker image build -t ${REPOSITORY_URI}:${IMAGE_TAG} .
-
     post_build:
         commands:
-            - docker push ${REPOSITORY_URI}:${IMAGE_TAG}
+            - docker image push ${REPOSITORY_URI}:${IMAGE_TAG}
+            - printf '{"name":"%s","ImageURI":"%s"}' $ECR_REPOSITORY_NAME $REPOSITORY_URI:$IMAGE_TAG > imageDetail.json
+
+artifacts:
+    files:
+        - imageDetail.json
